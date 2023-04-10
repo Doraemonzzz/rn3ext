@@ -14,7 +14,7 @@ arch_flags = get_gpu_arch_flags()
 
 setup(
     name="rn3ext",
-    version="0.0.0",
+    version="0.0.1",
     packages=find_packages(),
     description="Rnn for the next century",
     author="Doraemonzzz",
@@ -24,6 +24,14 @@ setup(
         CUDAExtension(
             "rn3ext.wkv_cuda",
             sources=["rnn/rwkv/cuda/wkv_cuda.cu", "rnn/rwkv/cuda/wkv_op.cpp",],
+            extra_compile_args={
+                'cxx': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'],
+                'nvcc': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'] + arch_flags
+            }
+        ),
+        CUDAExtension(
+            "rn3ext.lru_cuda",
+            sources=["rnn/lru/cuda/lru_cuda_kernel.cu", "rnn/lru/cuda/lru_cuda.cpp",],
             extra_compile_args={
                 'cxx': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'],
                 'nvcc': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'] + arch_flags
