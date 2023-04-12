@@ -68,7 +68,7 @@ class Lru(nn.Module):
         
         output = output.transpose(1, 0)
         
-        return output, hiddens_real, hiddens_imag, input_real, input_imag
+        return output
 
     def forward_naive(self, x):
         x = x.transpose(1, 0)
@@ -110,4 +110,4 @@ class Lru(nn.Module):
         
         output = output.transpose(1, 0)
         
-        return output, hiddens_real, hiddens_imag, input_real, input_imag
+        return output
