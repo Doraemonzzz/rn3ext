@@ -19,19 +19,19 @@ setup(
     description="Rnn for the next century",
     author="Doraemonzzz",
     author_email="doraemon_zzz@163.com",
-    url="https://github.com/Doraemonzzz/rnnext",
+    url="https://github.com/Doraemonzzz/rn3ext",
     ext_modules=[
         CUDAExtension(
-            "rn3ext.wkv_cuda",
-            sources=["rnn/rwkv/cuda/wkv_cuda.cu", "rnn/rwkv/cuda/wkv_op.cpp",],
+            "wkv_cuda",
+            sources=["rn3ext/rwkv/cuda/wkv_cuda.cu", "rn3ext/rwkv/cuda/wkv_op.cpp",],
             extra_compile_args={
                 'cxx': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'],
                 'nvcc': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'] + arch_flags
             }
         ),
         CUDAExtension(
-            "rn3ext.lru_cuda",
-            sources=["rnn/lru/cuda/lru_cuda_kernel.cu", "rnn/lru/cuda/lru_cuda.cpp",],
+            "lru_cuda",
+            sources=["rn3ext/lru/cuda/lru_cuda_kernel.cu", "rn3ext/lru/cuda/lru_cuda.cpp",],
             extra_compile_args={
                 'cxx': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'],
                 'nvcc': ['-O2', '-std=c++14', '-D_GLIBCXX_USE_CXX11_ABI=0'] + arch_flags

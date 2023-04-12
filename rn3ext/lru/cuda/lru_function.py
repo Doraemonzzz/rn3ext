@@ -3,8 +3,7 @@ from torch.autograd import Function
 from torch.utils.cpp_extension import load
 import os
 
-from rn3ext import lru_cuda
-
+import lru_cuda
 
 class LruFunction(Function):
     @staticmethod

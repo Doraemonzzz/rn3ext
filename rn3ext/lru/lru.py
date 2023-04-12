@@ -41,49 +41,51 @@ class Lru(nn.Module):
         return torch.Tensor(nu_log), torch.Tensor(theta_log), torch.Tensor(gamma_log)
 
     def forward(self, x):
+        x = x.transpose(1, 0)
         n, b, d = x.shape
         input_state = self.in_proj(x)
         
         # shape, (d, )
-        nu = torch.exp(self.nu_log)
+        nu = torch.exp(-torch.exp(self.nu_log))
         theta = torch.exp(self.theta_log) 
-        gamma = torch.exp(-torch.exp(self.gamma_log))
-        
-        gamma_real = nu * torch.cos(theta)
-        gamma_imag = nu * torch.sin(theta)
-        
+        gamma = torch.exp(self.gamma_log)
+
+        lambda_real = nu * torch.cos(theta)
+        lambda_imag = nu * torch.sin(theta)
         # to do: update cuda
-        index = torch.ones(n, 1, 1).to(x)
-        gamma_real = gamma_real * index
-        gamma_imag = gamma_imag * index
+        index = torch.ones(n, b, 1).to(x)
+        lambda_real = lambda_real * index
+        lambda_imag = lambda_imag * index
         
         input_state = rearrange(input_state, "n b (e k) -> n b e k", k=2)
         input_real = gamma * input_state[..., 0]
         input_imag = gamma * input_state[..., 1]
         
-        hiddens_real, hiddens_imag = LruFunction.apply(input_real, input_imag, gamma_real, gamma_imag)
+        hiddens_real, hiddens_imag = LruFunction.apply(input_real, input_imag, lambda_real, lambda_imag)
         feature = torch.cat([hiddens_real, hiddens_imag], dim=-1)
 
         output = self.out_proj(feature)
         
-        return output
+        output = output.transpose(1, 0)
+        
+        return output, hiddens_real, hiddens_imag, input_real, input_imag
 
     def forward_naive(self, x):
+        x = x.transpose(1, 0)
         n, b, d = x.shape
         input_state = self.in_proj(x)
         
         # shape, (d, )
-        nu = torch.exp(self.nu_log)
+        nu = torch.exp(-torch.exp(self.nu_log))
         theta = torch.exp(self.theta_log) 
-        gamma = torch.exp(-torch.exp(self.gamma_log))
-        
-        gamma_real = nu * torch.cos(theta)
-        gamma_imag = nu * torch.sin(theta)
-        
+        gamma = torch.exp(self.gamma_log)
+
+        lambda_real = nu * torch.cos(theta)
+        lambda_imag = nu * torch.sin(theta)
         # to do: update cuda
-        index = torch.ones(n, 1, 1).to(x)
-        gamma_real = gamma_real * index
-        gamma_imag = gamma_imag * index
+        index = torch.ones(n, b, 1).to(x)
+        lambda_real = lambda_real * index
+        lambda_imag = lambda_imag * index
         
         input_state = rearrange(input_state, "n b (e k) -> n b e k", k=2)
         input_real = gamma * input_state[..., 0]
@@ -94,9 +96,8 @@ class Lru(nn.Module):
         hiddens_real = []
         hiddens_imag = []
         for i in range(n):
-            hidden_real_next = gamma_real[i] * hidden_real - gamma_imag[i] * hidden_imag + input_real[i]
-            hidden_imag_next = gamma_real[i] * hidden_imag + gamma_imag[i] * hidden_real + input_imag[i]
-            # print(hidden_real_next.shape)
+            hidden_real_next = lambda_real[i] * hidden_real - lambda_imag[i] * hidden_imag + input_real[i]
+            hidden_imag_next = lambda_real[i] * hidden_imag + lambda_imag[i] * hidden_real + input_imag[i]
             hiddens_real.append(hidden_real_next)
             hiddens_imag.append(hidden_imag_next)
             hidden_real = hidden_real_next
@@ -107,4 +108,6 @@ class Lru(nn.Module):
 
         output = self.out_proj(feature)
         
-        return output
+        output = output.transpose(1, 0)
+        
+        return output, hiddens_real, hiddens_imag, input_real, input_imag

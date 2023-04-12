@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Function
 from torch.utils.cpp_extension import load
 
-from rn3ext import wkv_cuda
+import wkv_cuda
 
 T_MAX = 1024
 
