@@ -40,13 +40,13 @@ class LruForgetGate(nn.Module):
         
         return torch.Tensor(nu_log), torch.Tensor(theta_log), torch.Tensor(gamma_log)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         x = x.transpose(1, 0)
         n, b, d = x.shape
         input_state = self.in_proj(x)
         
         # shape, (d, )
-        nu = torch.nu_proj(x)
+        nu = F.sigmoid(self.nu_proj(x))
         theta = torch.exp(self.theta_log) 
         gamma = torch.exp(self.gamma_log)
 

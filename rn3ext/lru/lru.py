@@ -40,7 +40,7 @@ class Lru(nn.Module):
         
         return torch.Tensor(nu_log), torch.Tensor(theta_log), torch.Tensor(gamma_log)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         x = x.transpose(1, 0)
         n, b, d = x.shape
         input_state = self.in_proj(x)
