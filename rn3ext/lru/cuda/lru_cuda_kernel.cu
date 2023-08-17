@@ -103,17 +103,32 @@ std::vector<torch::Tensor> lru_forward_cuda(
     dim3 threads(128, 4);
     dim3 blocks((d + threads.x - 1) / threads.x, (b + threads.y - 1) / threads.y);
 
-    AT_DISPATCH_FLOATING_TYPES_AND_HALF(x_real.scalar_type(), "lru_forward_cuda", ([&] {
-        lru_forward_kernel<scalar_t><<<blocks, threads>>>(
-            x_real.data_ptr<scalar_t>(),
-            x_imag.data_ptr<scalar_t>(),
-            lambda_real.data_ptr<scalar_t>(),
-            lambda_imag.data_ptr<scalar_t>(),
-            output_real.data_ptr<scalar_t>(),
-            output_imag.data_ptr<scalar_t>(),
-            n, b, d
-        );
-    }));
+    switch (x_real.type().scalarType()) {
+        case torch::ScalarType::BFloat16:
+            lru_forward_kernel<at::BFloat16><<<blocks, threads>>>(
+                x_real.data_ptr<at::BFloat16>(),
+                x_imag.data_ptr<at::BFloat16>(),
+                lambda_real.data_ptr<at::BFloat16>(),
+                lambda_imag.data_ptr<at::BFloat16>(),
+                output_real.data_ptr<at::BFloat16>(),
+                output_imag.data_ptr<at::BFloat16>(),
+                n, b, d
+            );
+            break;
+        default:
+            AT_DISPATCH_FLOATING_TYPES_AND_HALF(x_real.scalar_type(), "lru_forward_cuda", ([&] {
+                lru_forward_kernel<scalar_t><<<blocks, threads>>>(
+                    x_real.data_ptr<scalar_t>(),
+                    x_imag.data_ptr<scalar_t>(),
+                    lambda_real.data_ptr<scalar_t>(),
+                    lambda_imag.data_ptr<scalar_t>(),
+                    output_real.data_ptr<scalar_t>(),
+                    output_imag.data_ptr<scalar_t>(),
+                    n, b, d
+                );
+            }));
+    }
+
 
     return {output_real, output_imag};
 }
@@ -140,17 +155,31 @@ std::vector<torch::Tensor> lru_backward_cuda(
     dim3 threads(128, 4);
     dim3 blocks((d + threads.x - 1) / threads.x, (b + threads.y - 1) / threads.y);
 
-    AT_DISPATCH_FLOATING_TYPES_AND_HALF(x_real.scalar_type(), "lru_backward_cuda", ([&] {
-        lru_backward_kernel<scalar_t><<<blocks, threads>>>(
-            x_real.data_ptr<scalar_t>(), x_imag.data_ptr<scalar_t>(),
-            lambda_real.data_ptr<scalar_t>(), lambda_imag.data_ptr<scalar_t>(),
-            hidden_states_real.data_ptr<scalar_t>(), hidden_states_imag.data_ptr<scalar_t>(),
-            grad_output_real.data_ptr<scalar_t>(), grad_output_imag.data_ptr<scalar_t>(),
-            grad_x_real.data_ptr<scalar_t>(), grad_x_imag.data_ptr<scalar_t>(),
-            grad_lambda_real.data_ptr<scalar_t>(), grad_lambda_imag.data_ptr<scalar_t>(),
-            n, b, d
-        );
-    }));
+    switch (x_real.type().scalarType()) {
+        case torch::ScalarType::BFloat16:
+            lru_backward_kernel<at::BFloat16><<<blocks, threads>>>(
+                x_real.data_ptr<at::BFloat16>(), x_imag.data_ptr<at::BFloat16>(),
+                lambda_real.data_ptr<at::BFloat16>(), lambda_imag.data_ptr<at::BFloat16>(),
+                hidden_states_real.data_ptr<at::BFloat16>(), hidden_states_imag.data_ptr<at::BFloat16>(),
+                grad_output_real.data_ptr<at::BFloat16>(), grad_output_imag.data_ptr<at::BFloat16>(),
+                grad_x_real.data_ptr<at::BFloat16>(), grad_x_imag.data_ptr<at::BFloat16>(),
+                grad_lambda_real.data_ptr<at::BFloat16>(), grad_lambda_imag.data_ptr<at::BFloat16>(),
+                n, b, d
+            );
+            break;
+        default:
+            AT_DISPATCH_FLOATING_TYPES_AND_HALF(x_real.scalar_type(), "lru_backward_cuda", ([&] {
+                lru_backward_kernel<scalar_t><<<blocks, threads>>>(
+                    x_real.data_ptr<scalar_t>(), x_imag.data_ptr<scalar_t>(),
+                    lambda_real.data_ptr<scalar_t>(), lambda_imag.data_ptr<scalar_t>(),
+                    hidden_states_real.data_ptr<scalar_t>(), hidden_states_imag.data_ptr<scalar_t>(),
+                    grad_output_real.data_ptr<scalar_t>(), grad_output_imag.data_ptr<scalar_t>(),
+                    grad_x_real.data_ptr<scalar_t>(), grad_x_imag.data_ptr<scalar_t>(),
+                    grad_lambda_real.data_ptr<scalar_t>(), grad_lambda_imag.data_ptr<scalar_t>(),
+                    n, b, d
+                );
+            }));
+    }
 
     return {grad_x_real, grad_x_imag, grad_lambda_real, grad_lambda_imag};
 }
